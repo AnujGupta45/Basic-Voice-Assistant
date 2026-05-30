@@ -1,87 +1,88 @@
-# Basic Voice Assistant
+# 🎙️ Basic Voice Assistant
 
-A personal desktop voice assistant built in Python that supports voice commands for web searching, playing music, sending emails, looking up information on Wikipedia, and running basic system applications.
-
-## Features
-
-- **Speech Recognition & Text-to-Speech**: Speech-to-text uses the free Google Web Speech API and text-to-speech uses `pyttsx3` (offline, SAPI5 on Windows).
-- **Web Browsing & Search**: Hands-free opening of preset websites like Google, YouTube, GitHub, and StackOverflow, or performing general Google searches.
-- **Music Playback**: Search and play tracks on YouTube or play random music files from a configured local directory.
-- **Wikipedia Integration**: Retrieves a two-sentence summary of any topic directly via the Wikipedia API.
-- **Email Automation**: Compose and send emails using SMTP (fully supports SSL/TLS authentication).
-- **OS Automation**: Launch tools like Notepad, Calculator, Command Prompt, or File Explorer.
-- **Robust Fallback**: Automatically switches to **Keyboard Command Mode** if a microphone is not connected or the speech recognition service is offline.
+Welcome to your new personal desktop helper! This is a friendly, hands-free voice assistant built in Python designed to make your daily computer tasks a breeze. Whether you want to search the web, check the weather, compose an email, or get system updates, you can do it all just by speaking.
 
 ---
 
-## Technical Stack
+## 🚀 Quick Start (No Setup Required!)
 
-- **Language**: Python 3.11+
-- **Speech Input**: `SpeechRecognition`, `PyAudio`
-- **Speech Output**: `pyttsx3`
-- **APIs**: Wikipedia API, SMTP (smtplib)
-- **Utilities**: `webbrowser`, `subprocess`, `os`, `python-dotenv`
+We have precompiled the assistant into a standalone Windows executable. You can download and run it directly without installing Python or setting up any dependencies:
+
+👉 **[Download VoiceAssistant.exe directly from GitHub](https://github.com/AnujGupta45/Basic-Voice-Assistant/raw/main/release/VoiceAssistant.exe)**
+
+> [!NOTE]
+> When running the executable, it will open a Command Prompt window. If you don't have a microphone plugged in, it will automatically switch to **Keyboard Command Mode** so you can type your commands.
 
 ---
 
-## Getting Started
+## 🛠️ For Developers (Running from Source)
 
-### Prerequisites
+If you'd like to customize the assistant or run it directly from the code:
 
-Make sure you have Python 3.8+ installed (this project was built and verified with Python 3.11.1).
+### 1. Install Dependencies
+Make sure you have Python 3.8+ installed (verified on Python 3.11). Install the required packages:
+```bash
+pip install -r requirements.txt
+```
+*(On Windows, `pyaudio` installs automatically. If you hit any issues, try running `pip install pipwin` followed by `pipwin install pyaudio`.)*
 
-### Setup and Installation
-
-1. **Clone or navigate** into the project folder.
-2. **Install dependencies**:
-   ```bash
-   pip install -r requirements.txt
-   ```
-   *Note: On Windows, `pyaudio` installs automatically via wheels. If you run into build errors, verify your compiler tools or try installing `pip install pipwin` then `pipwin install pyaudio`.*
-
-3. **Configure Environment Variables**:
-   Copy the example environment file and name it `.env`:
+### 2. Configure Settings (Optional)
+If you want to use email automation or play music from your local library, configure your environment variables:
+1. Make a copy of `.env.example` and rename it to `.env`:
    ```bash
    copy .env.example .env
    ```
-   Open the `.env` file and configure:
-   - `EMAIL_USER`: Your email address.
-   - `EMAIL_PASS`: Your email password (for Gmail, this **must** be an [App Password](https://support.google.com/accounts/answer/185833)).
-   - `MUSIC_DIR`: (Optional) Absolute path to a folder on your computer containing music files (e.g. `C:\Users\Username\Music`).
+2. Open `.env` and fill in:
+   - `EMAIL_USER` & `EMAIL_PASS`: For email sending (supports App Passwords for Gmail).
+   - `MUSIC_DIR`: The path to your local music folder.
 
----
-
-## Running the Assistant
-
-Execute the orchestrator:
+### 3. Run the Assistant
+Launch the assistant orchestrator:
 ```bash
 python main.py
 ```
 
-Upon launching, the assistant will greet you (e.g. "Good morning!") and listen for voice commands. If a microphone is not detected, it will display `[System Info] Microphone not detected/accessible` and prompt you to type commands.
+---
 
-### Supported Voice Commands
+## 🗣️ What Can You Ask It?
 
-Here are some examples of what you can say:
+The assistant is conversational and listens for natural commands. Here are some of the things you can tell it:
 
-| Action / Category | Example Voice Commands |
-| :--- | :--- |
-| **System Info** | "what is the time" / "what is the date" |
-| **Wikipedia** | "search wikipedia for Albert Einstein" / "wikipedia space exploration" |
-| **Web Browsing** | "open google" / "open youtube" / "open github.com" / "search google for python tutorials" |
-| **Music** | "play shape of you" / "play music" / "play local music" |
-| **Email** | "send an email" / "send mail" (follow prompt to provide email, subject, body, and say "yes" to send) |
-| **System Utilities** | "open notepad" / "open calculator" / "open command prompt" / "open file explorer" |
-| **Identify** | "who are you" / "what can you do" |
-| **Termination** | "goodbye" / "exit" / "stop" / "go offline" |
+### 🌐 Web & Search
+* *"open google"* / *"open youtube"* / *"open github.com"*
+* *"search google for Python programming tutorials"*
+* *"search wikipedia for Albert Einstein"*
+
+### 🎵 Music & Entertainment
+* *"play local music"* (shuffles songs from your configured music folder)
+* *"play Shape of You"* (searches and plays on YouTube)
+* *"tell a joke"* (gets a laugh from a joke API or local backups)
+
+### 📧 Email Automation
+* *"send an email"* (the assistant will guide you step-by-step to input the address, subject, and message)
+
+### 🖥️ OS Automation & System Info
+* *"open notepad"* / *"open calculator"* / *"open file explorer"* / *"open command prompt"*
+* *"system status"* (reads out CPU load, RAM usage, and battery status)
+* *"volume up"* / *"volume down"* / *"mute"* / *"unmute"*
+
+### 🌦️ Daily Updates
+* *"what is the time"* / *"what is the date"*
+* *"check the weather in London"* (or just *"check the weather"* for your location)
+* *"read the news"* (retrieves the top 3 headlines of the day)
+
+### 👋 Leaving
+* *"goodbye"* / *"exit"* / *"stop"* / *"go offline"*
 
 ---
 
-## Running Tests
+## 🧠 Smart Features Built-in
 
-Automated integration tests are provided to verify the routing, wikipedia lookup, email format preparation, and OS commands without invoking actual physical speakers or microphone streams.
+* **Keyboard Fallback**: If you don't have a working microphone or the internet connection drops, the assistant won't crash—it will gently switch to Keyboard Mode so you can type commands.
+* **Ambient Noise Tuning**: Automatically adjusts microphone sensitivity to filter out background noise before listening.
+* **Fully Tested**: Includes a robust suite of unit tests verifying all commands and actions. Run them anytime using:
+  ```bash
+  python -m unittest test_assistant.py
+  ```
 
-Run tests using Python's built-in unittest framework:
-```bash
-python -m unittest test_assistant.py
-```
+Enjoy using your voice assistant! Feel free to customize and expand its vocabulary in `main.py` and `actions.py`.
