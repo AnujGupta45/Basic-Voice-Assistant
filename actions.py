@@ -6,6 +6,8 @@ import random
 import webbrowser
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+import ctypes
+import requests
 import wikipedia
 import config
 
@@ -142,3 +144,136 @@ def run_os_command(query):
             return f"Failed to open File Explorer: {e}"
     else:
         return "Application shortcut not recognized."
+
+def get_weather(query):
+    """Fetches weather from wttr.in using requests."""
+    city = query.replace("weather", "").replace("temperature", "").replace("temp", "").replace("in", "").replace("for", "").strip()
+    try:
+        url = f"https://wttr.in/{city}?format=3" if city else "https://wttr.in/?format=3"
+        response = requests.get(url, timeout=5)
+        if response.status_code == 200:
+            return response.text.strip()
+        else:
+            return f"Could not retrieve weather information at this time (status code {response.status_code})."
+    except Exception as e:
+        return f"Unable to reach weather service: {e}"
+
+def control_system_volume(command):
+    """Controls Windows system volume using ctypes."""
+    VK_VOLUME_MUTE = 0xAD
+    VK_VOLUME_DOWN = 0xAE
+    VK_VOLUME_UP = 0xAF
+    
+    if "mute" in command:
+        ctypes.windll.user32.keybd_event(VK_VOLUME_MUTE, 0, 0, 0)
+        ctypes.windll.user32.keybd_event(VK_VOLUME_MUTE, 0, 2, 0)
+        return "Muting system volume."
+    elif "unmute" in command:
+        ctypes.windll.user32.keybd_event(VK_VOLUME_MUTE, 0, 0, 0)
+        ctypes.windll.user32.keybd_event(VK_VOLUME_MUTE, 0, 2, 0)
+        return "Toggled mute status."
+    elif "up" in command or "increase" in command:
+        for _ in range(5):
+            ctypes.windll.user32.keybd_event(VK_VOLUME_UP, 0, 0, 0)
+            ctypes.windll.user32.keybd_event(VK_VOLUME_UP, 0, 2, 0)
+        return "Increased volume."
+    elif "down" in command or "decrease" in command:
+        for _ in range(5):
+            ctypes.windll.user32.keybd_event(VK_VOLUME_DOWN, 0, 0, 0)
+            ctypes.windll.user32.keybd_event(VK_VOLUME_DOWN, 0, 2, 0)
+        return "Decreased volume."
+    return "Volume command not recognized."
+
+def get_news():
+    """Fetches top 3 general news headlines from saurav.tech News API."""
+    try:
+        url = "https://saurav.tech/NewsAPI/top-headlines/category/general/us.json"
+        response = requests.get(url, timeout=5)
+        if response.status_code == 200:
+            data = response.json()
+            articles = data.get("articles", [])[:3]
+            if articles:
+                headlines = []
+                for i, article in enumerate(articles, 1):
+                    title = article.get("title", "").split(" - ")[0]
+                    headlines.append(f"Headline {i}: {title}")
+                return "Here are the top 3 news headlines. " + ". ".join(headlines)
+            else:
+                return "I couldn't find any news articles."
+        else:
+            return "I failed to retrieve the news at this time."
+    except Exception as e:
+        return f"Error reaching the news service: {e}"
+
+def get_joke():
+    """Fetches a random joke from the Official Joke API with local backup."""
+    local_jokes = [
+        "Why don't scientists trust atoms? Because they make up everything!",
+        "How does a computer get drunk? It takes screenshots!",
+        "Why did the computer go to the doctor? Because it had a virus!",
+        "What do you call a programmer from Finland? Nerdic!",
+        "Why do programmers wear glasses? Because they can't C-sharp!",
+        "Why did the database administrator leave the restaurant? There were too many tables!",
+        "Why do Java programmers have to wear glasses? Because they don’t C#."
+    ]
+    try:
+        response = requests.get("https://official-joke-api.appspot.com/random_joke", timeout=3)
+        if response.status_code == 200:
+            data = response.json()
+            return f"Here is a joke: {data.get('setup')} ... {data.get('punchline')}"
+    except Exception:
+        pass
+    return f"Here is a joke: {random.choice(local_jokes)}"
+
+class SYSTEM_POWER_STATUS(ctypes.Structure):
+    _fields_ = [
+        ('ACLineStatus', ctypes.c_byte),
+        ('BatteryFlag', ctypes.c_byte),
+        ('BatteryLifePercent', ctypes.c_byte),
+        ('Reserved1', ctypes.c_byte),
+        ('BatteryLifeTime', ctypes.c_ulong),
+        ('BatteryFullLifeTime', ctypes.c_ulong),
+    ]
+
+def get_system_info():
+    """Fetches CPU, RAM, and Battery status natively on Windows."""
+    info_parts = []
+    
+    # 1. CPU Load
+    try:
+        output = subprocess.check_output("wmic cpu get loadpercentage", shell=True).decode().strip()
+        lines = [line.strip() for line in output.split('\n') if line.strip()]
+        if len(lines) > 1:
+            info_parts.append(f"CPU load is at {lines[1]} percent")
+    except Exception:
+        pass
+        
+    # 2. RAM Usage
+    try:
+        output = subprocess.check_output("wmic OS get FreePhysicalMemory,TotalVisibleMemorySize", shell=True).decode().strip()
+        lines = [line.strip() for line in output.split('\n') if line.strip()]
+        if len(lines) > 1:
+            parts = lines[1].split()
+            if len(parts) >= 2:
+                free = int(parts[0]) / (1024 * 1024)
+                total = int(parts[1]) / (1024 * 1024)
+                used = total - free
+                info_parts.append(f"RAM usage is {used:.1f} GB out of {total:.1f} GB total")
+    except Exception:
+        pass
+        
+    # 3. Battery Status
+    try:
+        status = SYSTEM_POWER_STATUS()
+        if ctypes.windll.kernel32.GetSystemPowerStatus(ctypes.byref(status)):
+            percent = status.BatteryLifePercent
+            charging = "charging" if status.ACLineStatus == 1 else "not charging"
+            if percent != 255:
+                info_parts.append(f"Battery is at {percent} percent and is {charging}")
+    except Exception:
+        pass
+        
+    if info_parts:
+        return "System Status: " + ", ".join(info_parts) + "."
+    else:
+        return "I could not retrieve the system status details."

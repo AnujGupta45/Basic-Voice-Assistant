@@ -97,13 +97,41 @@ def execute_command(engine, query, text_mode=False):
         response = actions.run_os_command(query)
         engine.speak(response)
 
+    # 7a. Weather check
+    elif "weather" in query or "temperature" in query or "temp" in query:
+        engine.speak("Checking weather...")
+        response = actions.get_weather(query)
+        engine.speak(response)
+
+    # 7b. System volume control
+    elif "volume" in query or "mute" in query or "unmute" in query:
+        response = actions.control_system_volume(query)
+        engine.speak(response)
+
+    # 7c. News updates
+    elif "news" in query or "headlines" in query:
+        engine.speak("Retrieving top headlines...")
+        response = actions.get_news()
+        engine.speak(response)
+
+    # 7d. Joke telling
+    elif "joke" in query:
+        response = actions.get_joke()
+        engine.speak(response)
+
+    # 7e. System status checking
+    elif any(word in query for word in ["system status", "battery status", "cpu load", "ram usage", "system info"]):
+        engine.speak("Checking system status...")
+        response = actions.get_system_info()
+        engine.speak(response)
+
     # 8. Help / Information command
     elif "who are you" in query or "what can you do" in query:
-        engine.speak("I am your voice assistant. I can search Wikipedia, send emails, open websites, play music, tell you the time, and open programs like Notepad or Calculator.")
+        engine.speak("I am your voice assistant. I can search Wikipedia, send emails, open websites, play music, tell you the time, check the weather, read the news, tell jokes, control system volume, check system status, and open programs like Notepad or Calculator.")
     
     # 9. Fallback
     else:
-        engine.speak("I didn't quite catch that. Try commands like 'open YouTube', 'search Wikipedia for space', 'what time is it', or 'open Notepad'.")
+        engine.speak("I didn't quite catch that. Try commands like 'check the weather', 'read the news', 'tell a joke', 'system status', 'volume up', 'open YouTube', or 'search Wikipedia for space'.")
         
     return True
 

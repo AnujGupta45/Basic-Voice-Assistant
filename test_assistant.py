@@ -63,5 +63,98 @@ class TestVoiceAssistant(unittest.TestCase):
         self.assertEqual(response, "Opening Notepad")
         mock_popen.assert_called_once_with("notepad.exe")
 
+    @patch('requests.get')
+    def test_get_weather_success(self, mock_get):
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.text = "Paris: ⛅️ +15°C"
+        mock_get.return_value = mock_response
+        
+        response = actions.get_weather("weather in Paris")
+        self.assertEqual(response, "Paris: ⛅️ +15°C")
+        mock_get.assert_called_once_with("https://wttr.in/Paris?format=3", timeout=5)
+
+    @patch('requests.get')
+    def test_get_weather_failure(self, mock_get):
+        mock_response = MagicMock()
+        mock_response.status_code = 500
+        mock_get.return_value = mock_response
+        
+        response = actions.get_weather("weather")
+        self.assertIn("Could not retrieve weather", response)
+
+    @patch('ctypes.windll.user32.keybd_event')
+    def test_control_system_volume_up(self, mock_keybd):
+        response = actions.control_system_volume("volume up")
+        self.assertEqual(response, "Increased volume.")
+        self.assertEqual(mock_keybd.call_count, 10) # 5 key presses * 2 (down and up)
+
+    @patch('ctypes.windll.user32.keybd_event')
+    def test_control_system_volume_mute(self, mock_keybd):
+        response = actions.control_system_volume("mute")
+        self.assertEqual(response, "Muting system volume.")
+        self.assertEqual(mock_keybd.call_count, 2)
+
+    @patch('requests.get')
+    def test_get_news_success(self, mock_get):
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "articles": [
+                {"title": "First Headline - Source 1"},
+                {"title": "Second Headline - Source 2"},
+                {"title": "Third Headline - Source 3"}
+            ]
+        }
+        mock_get.return_value = mock_response
+        
+        response = actions.get_news()
+        self.assertIn("First Headline", response)
+        self.assertIn("Second Headline", response)
+        self.assertIn("Third Headline", response)
+
+    @patch('requests.get')
+    def test_get_joke_online(self, mock_get):
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "setup": "Why did the chicken cross the road?",
+            "punchline": "To get to the other side!"
+        }
+        mock_get.return_value = mock_response
+        
+        response = actions.get_joke()
+        self.assertIn("Why did the chicken cross the road?", response)
+        self.assertIn("To get to the other side!", response)
+
+    @patch('requests.get')
+    def test_get_joke_offline_fallback(self, mock_get):
+        mock_get.side_effect = Exception("Connection lost")
+        
+        response = actions.get_joke()
+        self.assertIn("Here is a joke", response) # verifying it returns a joke from the local list
+
+    @patch('subprocess.check_output')
+    @patch('ctypes.windll.kernel32.GetSystemPowerStatus')
+    def test_get_system_info(self, mock_power, mock_check_output):
+        # Mock CPU load percentage
+        mock_check_output.side_effect = [
+            b"LoadPercentage  \n 45 \n",
+            b"FreePhysicalMemory  TotalVisibleMemorySize \n 8388608  16777216 \n" # 8GB free out of 16GB total
+        ]
+        
+        # Mock Battery status structure
+        def mock_get_power(ref):
+            ref._obj.ACLineStatus = 1
+            ref._obj.BatteryLifePercent = 85
+            return 1
+            
+        mock_power.side_effect = mock_get_power
+        
+        response = actions.get_system_info()
+        self.assertIn("CPU load is at 45 percent", response)
+        self.assertIn("RAM usage is 8.0 GB out of 16.0 GB total", response)
+        self.assertIn("Battery is at 85 percent and is charging", response)
+
 if __name__ == '__main__':
     unittest.main()
